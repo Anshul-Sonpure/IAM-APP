@@ -97,7 +97,7 @@ app.post('/login', async (req, res) => {
 // ✅ Start Server
 // ===========================
 app.listen(PORT, () => {
-  console.log(`IAM server running at http://localhost:${PORT}`);
-  console.log(`Register: http://localhost:${PORT}/views/register.html`);
-  console.log(`Login:    http://localhost:${PORT}/views/login.html`);
+  console.log(`IAM server running at: http://localhost:${PORT}`);
+  console.log(`Acccess Register page: http://localhost:${PORT}/views/register.html`);
+  console.log(`Access Login page: http://localhost:${PORT}/views/login.html`);
 });

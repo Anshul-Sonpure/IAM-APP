@@ -43,39 +43,6 @@
   </div>
 <script>
   const messageBox = document.getElementById('messageBox');
-  const token = localStorage.getItem('token');
-
-  // 🔍 Check for existing session
-  if (token) {
-    fetch('/validate-token', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`
-      }
-    })
-    .then(res => res.json())
-    .then(data => {
-      if (data.valid) {
-        localStorage.setItem('userInfo', JSON.stringify({ username: data.username, role: data.role }));
-        showMessage("Session already exists. Please navigate to the respective application.", "info");
-        setTimeout(() => {
-          if (data.role === 'admin') {
-            window.location.href = 'http://localhost:3001/views/admin.html';
-          } else {
-            window.location.href = 'http://localhost:3001/views/user.html';
-          }
-        }, 5000);
-      } else {
-        localStorage.removeItem('token');
-        localStorage.removeItem('userInfo');
-      }
-    })
-    .catch(() => {
-      localStorage.removeItem('token');
-      localStorage.removeItem('userInfo');
-    });
-  }
 
   function showMessage(message, type) {
     messageBox.innerHTML = `<div class="message ${type}">${message}</div>`;
@@ -85,6 +52,45 @@
       }, 5000);
     }
   }
+
+  async function validateSession() {
+    const token = localStorage.getItem('token');
+
+    if (!token) return;
+
+    try {
+      const res = await fetch('/validate-token', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        }
+      });
+
+      const data = await res.json();
+
+      if (data.valid) {
+        localStorage.setItem('userInfo', JSON.stringify({ username: data.username, role: data.role }));
+        showMessage("Session already exists. Redirecting...", "info");
+        setTimeout(() => {
+          if (data.role === 'admin') {
+            window.location.href = 'http://localhost:3001/views/admin.html';
+          } else {
+            window.location.href = 'http://localhost:3001/views/user.html';
+          }
+        }, 2000);
+      } else {
+        localStorage.removeItem('token');
+        localStorage.removeItem('userInfo');
+      }
+    } catch (error) {
+      console.error("Session validation failed:", error);
+      // Don't clear token here — just let user retry
+    }
+  }
+
+  // 🔄 Triggers on back/forward nav too
+  window.addEventListener('pageshow', validateSession);
 
   // 🚀 Login submission handler
   document.getElementById('loginForm').addEventListener('submit', async (e) => {
