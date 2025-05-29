@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>User Dashboard</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <div class="container">
+    <h2>Welcome to TeamManager</h2>
+    <form id="logForm">
+      <label>Select Day (Mon–Fri)</label>
+      <select id="day">
+        <option>Monday</option>
+        <option>Tuesday</option>
+        <option>Wednesday</option>
+        <option>Thursday</option>
+        <option>Friday</option>
+      </select>
+      <button type="submit">Submit 9 hrs</button>
+    </form>
+
+    <h3>Your Logged Hours</h3>
+    <ul id="logList"></ul>
+  </div>
+
+  <script>
+    const token = localStorage.getItem('token');
+
+    document.getElementById('logForm').addEventListener('submit', async e => {
+      e.preventDefault();
+      const day = document.getElementById('day').value;
+      await fetch('/worklogs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ day })
+      });
+      loadLogs();
+    });
+
+    async function loadLogs() {
+      const res = await fetch('/worklogs', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const logs = await res.json();
+      const list = document.getElementById('logList');
+      list.innerHTML = '';
+      logs.forEach(log => {
+        const li = document.createElement('li');
+        li.textContent = `${log.day} - ${log.hours} hrs`;
+        list.appendChild(li);
+      });
+    }
+
+    loadLogs();
+  </script>
+</body>
+</html>

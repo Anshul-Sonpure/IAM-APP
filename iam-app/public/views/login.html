@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Login</title>
+  <link rel="stylesheet" href="../css/style.css" />
+  <style>
+    .message {
+      margin-top: 10px;
+      padding: 10px;
+      border-radius: 4px;
+    }
+    .success {
+      background-color: #d4edda;
+      color: #155724;
+    }
+    .error {
+      background-color: #f8d7da;
+      color: #721c24;
+    }
+    .info {
+      background-color: #d1ecf1;
+      color: #0c5460;
+    }
+    .container a {
+      color: white;
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Login</h2>
+    <form id="loginForm">
+      <input type="text" id="username" placeholder="Username" required />
+      <input type="password" id="password" placeholder="Password" required />
+      <button type="submit">Login</button>
+    </form>
+
+    <div id="messageBox"></div>
+
+    <p>Don't have an account? <a href="register.html">Register here</a></p>
+  </div>
+<script>
+  const messageBox = document.getElementById('messageBox');
+  const token = localStorage.getItem('token');
+
+  // 🔍 Check for existing session
+  if (token) {
+    fetch('/validate-token', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`
+      }
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.valid) {
+        localStorage.setItem('userInfo', JSON.stringify({ username: data.username, role: data.role }));
+        showMessage("Session already exists. Please navigate to the respective application.", "info");
+        setTimeout(() => {
+          if (data.role === 'admin') {
+            window.location.href = 'http://localhost:3001/views/admin.html';
+          } else {
+            window.location.href = 'http://localhost:3001/views/user.html';
+          }
+        }, 5000);
+      } else {
+        localStorage.removeItem('token');
+        localStorage.removeItem('userInfo');
+      }
+    })
+    .catch(() => {
+      localStorage.removeItem('token');
+      localStorage.removeItem('userInfo');
+    });
+  }
+
+  function showMessage(message, type) {
+    messageBox.innerHTML = `<div class="message ${type}">${message}</div>`;
+    if (type !== 'info') {
+      setTimeout(() => {
+        messageBox.innerHTML = '';
+      }, 5000);
+    }
+  }
+
+  // 🚀 Login submission handler
+  document.getElementById('loginForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const username = document.getElementById('username').value;
+    const password = document.getElementById('password').value;
+
+    const response = await fetch('/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password })
+    });
+
+    const data = await response.json();
+
+    if (response.ok) {
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('userInfo', JSON.stringify({ username: data.username, role: data.role }));
+
+      showMessage("Login successful. Redirecting...", "success");
+      setTimeout(() => {
+        messageBox.innerHTML = ''; // clear message just before redirect
+        if (data.role === 'admin') {
+          window.location.href = 'http://localhost:3001/views/admin.html';
+        } else {
+          window.location.href = 'http://localhost:3001/views/user.html';
+        }
+      }, 3000);
+    } else {
+      showMessage(data.error || 'Login failed. Please try again.', 'error');
+    }
+  });
+</script>
+</body>
+</html>

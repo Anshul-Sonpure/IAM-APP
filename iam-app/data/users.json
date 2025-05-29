@@ -1,0 +1,22 @@
+[
+  {
+    "username": "Admin01",
+    "password": "Admin@01",
+    "role": "admin",
+    "grants": [
+      "add_user",
+      "delete_user",
+      "modify_user"
+    ]
+  },
+  {
+    "username": "testUser01",
+    "password": "testUser01",
+    "role": "user",
+    "grants": [
+      "View Timesheet",
+      "Fill Timesheet",
+      "Submit Timesheet"
+    ]
+  }
+]

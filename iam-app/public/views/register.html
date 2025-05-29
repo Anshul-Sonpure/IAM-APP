@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Register</title>
+  <link rel="stylesheet" href="../css/style.css" />
+  <style>
+    .message {
+      margin-top: 10px;
+      padding: 10px;
+      border-radius: 4px;
+    }
+    .success {
+      background-color: #d4edda;
+      color: #155724;
+    }
+    .error {
+      background-color: #f8d7da;
+      color: #721c24;
+    }
+    .info {
+      background-color: #d1ecf1;
+      color: #0c5460;
+    }
+    .container a {
+      color: white;
+      text-decoration: underline;
+    }
+    .grants-form {
+      display: none;
+      margin-top: 10px;
+    }
+    .grants-form label {
+      display: inline-block;
+      margin-left: 5px;
+    }
+    .grants-form input[type="checkbox"] {
+      margin-right: 5px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Register</h2>
+    <form id="registerForm">
+      <input type="text" id="username" placeholder="Username" required />
+      <input type="password" id="password" placeholder="Password" required />
+      <select id="role" required>
+        <option value="">Select Role</option>
+        <option value="admin">Admin</option>
+        <option value="user">User</option>
+      </select>
+
+      <div id="grantsForm" class="grants-form"></div>
+
+      <button type="submit">Register</button>
+    </form>
+
+    <div id="messageBox"></div>
+
+    <p>Already have an account? <a href="login.html">Login here</a></p>
+  </div>
+
+  <script>
+    const roleSelect = document.getElementById('role');
+    const grantsForm = document.getElementById('grantsForm');
+    const messageBox = document.getElementById('messageBox');
+
+    const grantsByRole = {
+      admin: [
+        "Add User",
+        "Delete User",
+        "Modify User",
+        "Approve Timesheet",
+        "Reject Timesheet"
+      ],
+      user: [
+        "View Timesheet",
+        "Fill Timesheet",
+        "Submit Timesheet"
+      ]
+    };
+
+    roleSelect.addEventListener('change', () => {
+      const selectedRole = roleSelect.value;
+      grantsForm.innerHTML = '';
+      if (grantsByRole[selectedRole]) {
+        grantsByRole[selectedRole].forEach(grant => {
+          const label = document.createElement('label');
+          const checkbox = document.createElement('input');
+          checkbox.type = 'checkbox';
+          checkbox.name = 'grants';
+          checkbox.value = grant;
+          label.appendChild(checkbox);
+          label.appendChild(document.createTextNode(' ' + grant));
+          grantsForm.appendChild(label);
+          grantsForm.appendChild(document.createElement('br'));
+        });
+        grantsForm.style.display = 'block';
+      } else {
+        grantsForm.style.display = 'none';
+      }
+    });
+
+    function showMessage(message, type) {
+      messageBox.innerHTML = `<div class="message ${type}">${message}</div>`;
+    }
+
+    document.getElementById('registerForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const username = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value.trim();
+      const role = roleSelect.value;
+
+      if (!role) {
+        showMessage('Please select a role before registering.', 'error');
+        return;
+      }
+
+      const grants = Array.from(document.querySelectorAll('input[name="grants"]:checked'))
+                          .map(cb => cb.value);
+
+      try {
+        const response = await fetch('/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password, role, grants })
+        });
+
+        const data = await response.json();
+
+        if (response.status === 201 || response.ok) {
+          showMessage('Registration successful. Redirecting to login...', 'success');
+          setTimeout(() => {
+            messageBox.innerHTML = ''; // Clear message before redirect
+            window.location.href = 'http://localhost:3000/views/login.html';
+          }, 2000);
+        } else {
+          showMessage(data.error || 'Registration failed. Please try again.', 'error');
+        }
+      } catch (error) {
+        console.error('Error during registration:', error);
+        showMessage('Something went wrong. Please try again later.', 'error');
+      }
+    });
+  </script>
+</body>
+</html>

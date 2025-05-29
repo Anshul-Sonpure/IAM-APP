@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Admin Console</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <div class="container">
+    <h2>Admin Console - TeamManager</h2>
+    <form id="addUserForm">
+      <input type="text" id="newUsername" placeholder="New Username" required>
+      <input type="password" id="newPassword" placeholder="Password" required>
+      <select id="newRole">
+        <option value="user">User</option>
+        <option value="admin">Admin</option>
+      </select>
+      <button type="submit">Add User</button>
+    </form>
+
+    <h3>Current Users</h3>
+    <ul id="userList"></ul>
+  </div>
+
+  <script>
+    const token = localStorage.getItem('token');
+
+    async function loadUsers() {
+      const res = await fetch('/users', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const users = await res.json();
+      const list = document.getElementById('userList');
+      list.innerHTML = '';
+      users.forEach(u => {
+        const li = document.createElement('li');
+        li.textContent = `${u.username} (${u.roles.join(', ')})`;
+        const btn = document.createElement('button');
+        btn.textContent = 'Delete';
+        btn.onclick = async () => {
+          await fetch(`/users/${u.username}`, {
+            method: 'DELETE',
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          loadUsers();
+        };
+        li.appendChild(btn);
+        list.appendChild(li);
+      });
+    }
+
+    document.getElementById('addUserForm').addEventListener('submit', async e => {
+      e.preventDefault();
+      const username = document.getElementById('newUsername').value;
+      const password = document.getElementById('newPassword').value;
+      const role = document.getElementById('newRole').value;
+      await fetch('/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ username, password, roles: [role] })
+      });
+      loadUsers();
+    });
+
+    loadUsers();
+  </script>
+</body>
+</html>
