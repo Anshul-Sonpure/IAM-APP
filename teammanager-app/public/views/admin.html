@@ -23,46 +23,60 @@
   </div>
 
   <script>
-    const token = localStorage.getItem('token');
+    // ✅ Securely store token from URL and remove it
+    function storeTokenFromURL() {
+      const url = new URL(window.location.href);
+      const token = url.searchParams.get('token');
 
-    async function loadUsers() {
-      const res = await fetch('/users', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      const users = await res.json();
-      const list = document.getElementById('userList');
-      list.innerHTML = '';
-      users.forEach(u => {
-        const li = document.createElement('li');
-        li.textContent = `${u.username} (${u.roles.join(', ')})`;
-        const btn = document.createElement('button');
-        btn.textContent = 'Delete';
-        btn.onclick = async () => {
-          await fetch(`/users/${u.username}`, {
-            method: 'DELETE',
-            headers: { Authorization: `Bearer ${token}` }
-          });
-          loadUsers();
-        };
-        li.appendChild(btn);
-        list.appendChild(li);
-      });
+      if (token) {
+        localStorage.setItem('token', token);
+
+        // 🔒 Clean up the token from the URL
+        url.searchParams.delete('token');
+        window.history.replaceState({}, document.title, url.pathname);
+      }
     }
 
-    document.getElementById('addUserForm').addEventListener('submit', async e => {
-      e.preventDefault();
-      const username = document.getElementById('newUsername').value;
-      const password = document.getElementById('newPassword').value;
-      const role = document.getElementById('newRole').value;
-      await fetch('/users', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ username, password, roles: [role] })
-      });
-      loadUsers();
-    });
+    // ✅ Validate token and role
+    async function validateTokenAndAccess() {
+      storeTokenFromURL();
+      const token = localStorage.getItem('token');
 
-    loadUsers();
+      if (!token) {
+        alert('Invalid or expired token. Please login through IAM application.');
+        window.location.href = 'http://localhost:3000/views/login.html';
+        return;
+      }
+
+      try {
+        const response = await fetch('http://localhost:3000/validate-token', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`
+          }
+        });
+
+        const data = await response.json();
+
+        if (!data.valid || data.role !== 'admin') {
+          alert('Access denied. Please login with an admin account.');
+          localStorage.removeItem('token');
+          localStorage.removeItem('userInfo');
+          window.location.href = 'http://localhost:3000/views/login.html';
+        }
+
+      } catch (error) {
+        console.error('Token validation failed:', error);
+        alert('Token validation failed. Please login again.');
+        localStorage.removeItem('token');
+        localStorage.removeItem('userInfo');
+        window.location.href = 'http://localhost:3000/views/login.html';
+      }
+    }
+
+    // 🔁 Run on page load
+    validateTokenAndAccess();
   </script>
 </body>
 </html>

@@ -55,7 +55,6 @@
 
   async function validateSession() {
     const token = localStorage.getItem('token');
-
     if (!token) return;
 
     try {
@@ -68,16 +67,12 @@
       });
 
       const data = await res.json();
-
       if (data.valid) {
         localStorage.setItem('userInfo', JSON.stringify({ username: data.username, role: data.role }));
         showMessage("Session already exists. Redirecting...", "info");
+
         setTimeout(() => {
-          if (data.role === 'admin') {
-            window.location.href = 'http://localhost:3001/views/admin.html';
-          } else {
-            window.location.href = 'http://localhost:3001/views/user.html';
-          }
+          window.location.href = `http://localhost:3001/views/${data.role}.html?token=${token}`;
         }, 2000);
       } else {
         localStorage.removeItem('token');
@@ -85,14 +80,11 @@
       }
     } catch (error) {
       console.error("Session validation failed:", error);
-      // Don't clear token here — just let user retry
     }
   }
 
-  // 🔄 Triggers on back/forward nav too
   window.addEventListener('pageshow', validateSession);
 
-  // 🚀 Login submission handler
   document.getElementById('loginForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     const username = document.getElementById('username').value;
@@ -111,13 +103,10 @@
       localStorage.setItem('userInfo', JSON.stringify({ username: data.username, role: data.role }));
 
       showMessage("Login successful. Redirecting...", "success");
+
       setTimeout(() => {
-        messageBox.innerHTML = ''; // clear message just before redirect
-        if (data.role === 'admin') {
-          window.location.href = 'http://localhost:3001/views/admin.html';
-        } else {
-          window.location.href = 'http://localhost:3001/views/user.html';
-        }
+        messageBox.innerHTML = '';
+        window.location.href = `http://localhost:3001/views/${data.role}.html?token=${data.token}`;
       }, 3000);
     } else {
       showMessage(data.error || 'Login failed. Please try again.', 'error');

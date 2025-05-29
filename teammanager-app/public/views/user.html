@@ -25,34 +25,57 @@
   </div>
 
   <script>
-    const token = localStorage.getItem('token');
+    function storeTokenFromURL() {
+      const url = new URL(window.location.href);
+      const token = url.searchParams.get('token');
 
-    document.getElementById('logForm').addEventListener('submit', async e => {
-      e.preventDefault();
-      const day = document.getElementById('day').value;
-      await fetch('/worklogs', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ day })
-      });
-      loadLogs();
-    });
+      if (token) {
+        localStorage.setItem('token', token);
 
-    async function loadLogs() {
-      const res = await fetch('/worklogs', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      const logs = await res.json();
-      const list = document.getElementById('logList');
-      list.innerHTML = '';
-      logs.forEach(log => {
-        const li = document.createElement('li');
-        li.textContent = `${log.day} - ${log.hours} hrs`;
-        list.appendChild(li);
-      });
+        // Remove token from URL without reloading the page
+        url.searchParams.delete('token');
+        window.history.replaceState({}, document.title, url.pathname);
+      }
     }
 
-    loadLogs();
+    async function validateTokenAndAccess() {
+      storeTokenFromURL(); // Capture token if passed in URL
+
+      const token = localStorage.getItem('token');
+
+      if (!token) {
+        alert('Invalid or expired token. Please login through IAM application.');
+        window.location.href = 'http://localhost:3000/views/login.html';
+        return;
+      }
+
+      try {
+        const response = await fetch('http://localhost:3000/validate-token', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`
+          }
+        });
+
+        const data = await response.json();
+
+        if (!data.valid || data.role !== 'user') {
+          alert('Access denied. Please login with a user account.');
+          localStorage.removeItem('token');
+          localStorage.removeItem('userInfo');
+          window.location.href = 'http://localhost:3000/views/login.html';
+        }
+      } catch (error) {
+        console.error('Token validation failed:', error);
+        alert('Token validation failed. Please login again.');
+        localStorage.removeItem('token');
+        localStorage.removeItem('userInfo');
+        window.location.href = 'http://localhost:3000/views/login.html';
+      }
+    }
+
+    validateTokenAndAccess();
   </script>
 </body>
 </html>
