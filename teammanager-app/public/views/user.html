@@ -4,10 +4,29 @@
   <meta charset="UTF-8">
   <title>User Dashboard</title>
   <link rel="stylesheet" href="../css/style.css">
+  <style>
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    .logout-btn {
+      background-color: #dc3545;
+      color: white;
+      border: none;
+      padding: 6px 12px;
+      cursor: pointer;
+    }
+  </style>
 </head>
 <body>
   <div class="container">
-    <h2>Welcome to TeamManager</h2>
+    <div class="top-bar">
+      <h2>Welcome to TeamManager</h2>
+      <button class="logout-btn" onclick="logout()">Logout</button>
+    </div>
+
     <form id="logForm">
       <label>Select Day (Mon–Fri)</label>
       <select id="day">
@@ -28,21 +47,16 @@
     function storeTokenFromURL() {
       const url = new URL(window.location.href);
       const token = url.searchParams.get('token');
-
       if (token) {
         localStorage.setItem('token', token);
-
-        // Remove token from URL without reloading the page
         url.searchParams.delete('token');
         window.history.replaceState({}, document.title, url.pathname);
       }
     }
 
     async function validateTokenAndAccess() {
-      storeTokenFromURL(); // Capture token if passed in URL
-
+      storeTokenFromURL();
       const token = localStorage.getItem('token');
-
       if (!token) {
         alert('Invalid or expired token. Please login through IAM application.');
         window.location.href = 'http://localhost:3000/views/login.html';
@@ -57,23 +71,27 @@
             Authorization: `Bearer ${token}`
           }
         });
-
         const data = await response.json();
-
         if (!data.valid || data.role !== 'user') {
           alert('Access denied. Please login with a user account.');
-          localStorage.removeItem('token');
-          localStorage.removeItem('userInfo');
-          window.location.href = 'http://localhost:3000/views/login.html';
+          logout();
         }
       } catch (error) {
-        console.error('Token validation failed:', error);
         alert('Token validation failed. Please login again.');
-        localStorage.removeItem('token');
-        localStorage.removeItem('userInfo');
-        window.location.href = 'http://localhost:3000/views/login.html';
+        logout();
       }
     }
+
+    function logout() {
+      localStorage.removeItem('token');
+      localStorage.removeItem('userInfo');
+      window.location.href = 'http://localhost:3000/views/logout.html';
+    }
+
+    window.addEventListener('beforeunload', () => {
+      localStorage.removeItem('token');
+      localStorage.removeItem('userInfo');
+    });
 
     validateTokenAndAccess();
   </script>

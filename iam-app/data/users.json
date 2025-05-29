@@ -18,5 +18,24 @@
       "Fill Timesheet",
       "Submit Timesheet"
     ]
+  },
+  {
+    "username": "Admin02",
+    "password": "Admin02",
+    "role": "admin",
+    "grants": [
+      "Add User",
+      "Reject Timesheet"
+    ]
+  },
+  {
+    "username": "admin03",
+    "password": "admin03",
+    "role": "admin",
+    "grants": [
+      "Add User",
+      "Delete User",
+      "Reject Timesheet"
+    ]
   }
 ]

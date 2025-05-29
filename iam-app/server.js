@@ -119,6 +119,31 @@ app.post('/validate-token', (req, res) => {
     });
   });
 });
+// ✅ Get All Users (Secure for Admin Only)
+app.get('/users', async (req, res) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+
+  if (!token) {
+    return res.status(401).json({ error: 'Token missing' });
+  }
+
+  try {
+    const decoded = jwt.verify(token, SECRET_KEY);
+
+    if (decoded.role !== 'admin') {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    const usersData = await fs.readFile(USERS_FILE, 'utf-8');
+    const users = JSON.parse(usersData);
+
+    res.json(users);
+  } catch (err) {
+    console.error('Failed to fetch users:', err);
+    res.status(403).json({ error: 'Invalid or expired token' });
+  }
+});
 
 // ✅ Start Server
 app.listen(PORT, () => {
