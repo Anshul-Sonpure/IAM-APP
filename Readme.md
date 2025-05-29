@@ -1,7 +1,8 @@
-🛡️ Identity and Access Management (IAM) System with SSO
+## 🛡️ Identity and Access Management (IAM) System with SSO
 A Node.js-based Identity and Access Management (IAM) system implementing user registration, login with JWT-based Single Sign-On (SSO), and role-based redirection to external applications. Designed as a modular and extensible demo project for authentication and authorization workflows.
 
 🔑 Features
+```
 ✅ User registration with role selection (Admin/User)
 ✅ Dynamic grant assignment based on role
 ✅ Secure login with JWT token generation
@@ -12,8 +13,9 @@ User → http://localhost:3001/views/user.html
 ✅ Session detection to auto-redirect if a valid token exists
 ✅ JSON-based user storage for demo purposes
 ✅ Frontend built with vanilla HTML/CSS/JS
-
+```
 🧩 Project Structure
+```
 project-root/
 │
 ├── iam-app/
@@ -52,6 +54,7 @@ project-root/
 │   ├── server.js
 ├── README.md
 └── LICENSE
+```
 
 ⚙️ Technologies Used
 - Node.js + Express.js
