@@ -4,15 +4,14 @@
   <meta charset="UTF-8" />
   <title>Admin Console - TeamManager</title>
 
-  <!-- Google Font: Combo -->
+  <!-- Google Font -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Faculty+Glyphic&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="../css/style.css" />
   <style>
     body {
-       font-family: "Faculty Glyphic", sans-serif;
+      font-family: "Faculty Glyphic", sans-serif;
       background: linear-gradient(to right, #f9d423, #ff4e50);
       margin: 0;
       padding: 20px;
@@ -46,15 +45,20 @@
       border-radius: 6px;
       cursor: pointer;
       transition: background-color 0.3s ease;
-      width: 30%;
     }
 
     .logout-btn:hover {
       background-color: #c82333;
     }
 
+    .button-group {
+      margin: 20px 0;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
     .grant-btn {
-      margin: 10px 10px 0 235px;
       padding: 10px 20px;
       border: none;
       border-radius: 6px;
@@ -63,7 +67,6 @@
       font-size: 14px;
       cursor: pointer;
       transition: background-color 0.3s ease, transform 0.2s ease;
-      width: 45%;
     }
 
     .grant-btn:hover {
@@ -105,13 +108,13 @@
   <div class="container">
     <div class="top-bar">
       <h2>Admin Console - TeamManager</h2>
-      <button class="logout-btn">Logout</button>
+      <button class="logout-btn" onclick="logout()">Logout</button>
     </div>
 
-    <!-- Grant-based action buttons will be rendered here -->
+    <!-- Dynamic Buttons Rendered Based on Grants -->
     <div id="adminActions" class="button-group"></div>
 
-    <!-- Add User Form (Initially Hidden) -->
+    <!-- Add User Form (Shown only when Add User button is clicked) -->
     <form id="addUserForm" class="hidden">
       <input type="text" id="newUsername" placeholder="New Username" required />
       <input type="password" id="newPassword" placeholder="Password" required />
@@ -138,6 +141,7 @@
       </table>
     </div>
   </div>
+
   <script>
     function storeTokenFromURL() {
       const url = new URL(window.location.href);
@@ -187,6 +191,33 @@
       localStorage.removeItem('token');
       localStorage.removeItem('userInfo');
     });
+	function renderGrantButtons(grants) {
+      const adminActions = document.getElementById('adminActions');
+      adminActions.innerHTML = '';
+
+      grants.forEach(grant => {
+        const btn = document.createElement('button');
+        btn.className = 'grant-btn';
+
+        // Normalize display label
+        let label = grant.replace(/_/g, ' ');
+        label = label.charAt(0).toUpperCase() + label.slice(1);
+
+        btn.textContent = label;
+
+        if (grant.toLowerCase() === 'add_user') {
+          btn.addEventListener('click', () => {
+            document.getElementById('addUserForm').classList.toggle('hidden');
+          });
+        } else {
+          btn.addEventListener('click', () => {
+            alert(`"${label}" clicked. (Not implemented yet)`);
+          });
+        }
+
+        adminActions.appendChild(btn);
+      });
+    }
 
     // View Users
     document.getElementById('ViewUserBtn').addEventListener('click', toggleUserTable);
@@ -207,7 +238,7 @@
 
           const users = await response.json();
           const tbody = document.querySelector('#userTable tbody');
-          tbody.innerHTML = ''; // Clear old data
+          tbody.innerHTML = '';
 
           users.forEach(user => {
             const row = document.createElement('tr');
@@ -225,9 +256,8 @@
       }
     }
 
-    // Add User
+    // Add User Logic
     const addUserForm = document.getElementById('addUserForm');
-
     addUserForm.addEventListener('submit', async function (e) {
       e.preventDefault();
 
@@ -245,12 +275,7 @@
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`
           },
-          body: JSON.stringify({
-            username,
-            password,
-            role,
-            grants
-          })
+          body: JSON.stringify({ username, password, role, grants })
         });
 
         const result = await response.json();
@@ -258,7 +283,8 @@
         if (response.ok) {
           alert('User added successfully!');
           addUserForm.reset();
-          toggleUserTable(); // Refresh user table
+          document.getElementById('addUserForm').classList.add('hidden');
+          toggleUserTable(); // Refresh
         } else {
           alert(result.message || 'Failed to add user');
         }

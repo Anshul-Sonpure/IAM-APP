@@ -43,5 +43,15 @@
     "password": "test_User01",
     "role": "user",
     "grants": []
+  },
+  {
+    "username": "user100",
+    "password": "user100",
+    "role": "user",
+    "grants": [
+      "View Timesheet",
+      "Fill Timesheet",
+      "Submit Timesheet"
+    ]
   }
 ]
