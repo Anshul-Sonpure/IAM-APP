@@ -37,5 +37,11 @@
       "Delete User",
       "Reject Timesheet"
     ]
+  },
+  {
+    "username": "test_User01",
+    "password": "test_User01",
+    "role": "user",
+    "grants": []
   }
 ]

@@ -5,8 +5,8 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import bodyParser from 'body-parser';
 import jwt from 'jsonwebtoken';
-import cors from 'cors'; // ✅ Added CORS
-import { SECRET_KEY } from './config.js'; // Your secret for JWT
+import cors from 'cors';
+import { SECRET_KEY } from './config.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -14,21 +14,16 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = 3000;
 
-// ✅ CORS setup to allow requests from TeamManager app
 app.use(cors({
   origin: 'http://localhost:3001',
   methods: ['GET', 'POST'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
-// Middleware
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
-
-// Static assets
 app.use(express.static(path.join(__dirname, 'public')));
 
-// File path
 const USERS_FILE = path.join(__dirname, 'data', 'users.json');
 
 // ✅ Register Endpoint
@@ -98,7 +93,7 @@ app.post('/login', async (req, res) => {
   }
 });
 
-// ✅ Validate Token Endpoint (Used by TeamManager-app)
+// ✅ Validate Token Endpoint
 app.post('/validate-token', (req, res) => {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
@@ -119,7 +114,8 @@ app.post('/validate-token', (req, res) => {
     });
   });
 });
-// ✅ Get All Users (Secure for Admin Only)
+
+// ✅ Get All Users (Admin Only)
 app.get('/users', async (req, res) => {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
@@ -142,6 +138,54 @@ app.get('/users', async (req, res) => {
   } catch (err) {
     console.error('Failed to fetch users:', err);
     res.status(403).json({ error: 'Invalid or expired token' });
+  }
+});
+
+// ✅ Add New User (Admin Only)
+app.post('/users', async (req, res) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+
+  if (!token) {
+    return res.status(401).json({ message: 'Token missing' });
+  }
+
+  try {
+    const decoded = jwt.verify(token, SECRET_KEY);
+
+    if (decoded.role !== 'admin') {
+      return res.status(403).json({ message: 'Access denied' });
+    }
+
+    const { username, password, role } = req.body;
+    let { grants } = req.body;
+
+    if (!username || !password || !role) {
+      return res.status(400).json({ message: 'Missing required fields' });
+    }
+
+    if (!grants) {
+      grants = role === 'admin' ? ['add_user'] : [];
+    } else if (typeof grants === 'string') {
+      grants = [grants];
+    }
+
+    const usersData = await fs.readFile(USERS_FILE, 'utf-8');
+    const users = JSON.parse(usersData);
+
+    if (users.find(u => u.username === username)) {
+      return res.status(409).json({ message: 'Username already exists' });
+    }
+
+    const newUser = { username, password, role, grants };
+    users.push(newUser);
+    await fs.writeFile(USERS_FILE, JSON.stringify(users, null, 2));
+
+    res.status(201).json({ message: 'User added successfully.' });
+
+  } catch (err) {
+    console.error('Failed to add user:', err);
+    res.status(500).json({ message: 'Server error' });
   }
 });
 
